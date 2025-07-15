@@ -1,0 +1,6 @@
+PyGithub
+stackapi
+google-generativeai
+faiss-cpu
+numpy
+loguru
