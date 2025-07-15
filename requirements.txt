@@ -4,3 +4,5 @@ google-generativeai
 faiss-cpu
 numpy
 loguru
+beautifulsoup4
+python-dotenv
