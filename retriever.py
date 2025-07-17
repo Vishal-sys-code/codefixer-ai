@@ -2,7 +2,7 @@ import faiss
 import json
 import logging
 import numpy as np
-import openai
+from openai import OpenAI
 import time
 from typing import List, Dict
 
@@ -13,7 +13,7 @@ class Retriever:
     """
     A class to retrieve documents from a FAISS index based on a query.
     """
-    def __init__(self, index_path: str, metadata_path: str):
+    def __init__(self, index_path: str, metadata_path: str, api_key: str = None):
         """
         Initializes the Retriever with a FAISS index and metadata.
 
@@ -26,6 +26,7 @@ class Retriever:
         with open(metadata_path, "r") as f:
             for line in f:
                 self.metadata.append(json.loads(line))
+        self.client = OpenAI(api_key=api_key)
 
     def _embed(self, text: str) -> np.ndarray:
         """
@@ -37,11 +38,11 @@ class Retriever:
         Returns:
             A normalized NumPy array representing the embedding.
         """
-        response = openai.Embedding.create(
+        response = self.client.embeddings.create(
             input=text,
             model="text-embedding-ada-002"
         )
-        embedding = np.array(response['data'][0]['embedding'])
+        embedding = np.array(response.data[0].embedding)
         return embedding / np.linalg.norm(embedding)
 
     def retrieve(self, query: str, top_k: int = 5) -> List[Dict]:
