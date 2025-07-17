@@ -2,7 +2,8 @@ import faiss
 import json
 import logging
 import numpy as np
-from openai import OpenAI
+import os
+import google.generativeai as genai
 import time
 from typing import List, Dict
 
@@ -13,7 +14,7 @@ class Retriever:
     """
     A class to retrieve documents from a FAISS index based on a query.
     """
-    def __init__(self, index_path: str, metadata_path: str, api_key: str = None):
+    def __init__(self, index_path: str, metadata_path: str, google_api_key: str = None):
         """
         Initializes the Retriever with a FAISS index and metadata.
 
@@ -26,11 +27,14 @@ class Retriever:
         with open(metadata_path, "r") as f:
             for line in f:
                 self.metadata.append(json.loads(line))
-        self.client = OpenAI(api_key=api_key)
+        self.google_api_key = google_api_key or os.environ.get("GOOGLE_AI_API_KEY")
+        if not self.google_api_key:
+            raise ValueError("Google API key not provided. Please set the GOOGLE_AI_API_KEY environment variable.")
+        genai.configure(api_key=self.google_api_key)
 
     def _embed(self, text: str) -> np.ndarray:
         """
-        Embeds a string using OpenAI's text-embedding-ada-002 model.
+        Embeds a string using Google's embedding-001 model.
 
         Args:
             text: The text to embed.
@@ -38,11 +42,12 @@ class Retriever:
         Returns:
             A normalized NumPy array representing the embedding.
         """
-        response = self.client.embeddings.create(
-            input=text,
-            model="text-embedding-ada-002"
+        response = genai.embed_content(
+            model="models/embedding-001",
+            content=text,
+            task_type="RETRIEVAL_DOCUMENT"
         )
-        embedding = np.array(response.data[0].embedding)
+        embedding = np.array(response["embedding"])
         return embedding / np.linalg.norm(embedding)
 
     def retrieve(self, query: str, top_k: int = 5) -> List[Dict]:
