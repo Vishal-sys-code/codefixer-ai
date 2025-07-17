@@ -29,3 +29,14 @@ def test_fixed_function():
 ```
 """
         return f"Suggested patch:\n{mock_diff}\n\nGenerated unit tests:\n{mock_tests}"
+import google.generativeai as genai
+
+class LLMAgent:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        genai.configure(api_key=self.api_key)
+
+    def generate_patch(self, context: str, file_path: str = None):
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(context)
+        return response.text
