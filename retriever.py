@@ -68,7 +68,7 @@ class Retriever:
         for i, idx in enumerate(indices[0]):
             metadata = self.metadata[idx]
             results.append({
-                "text": metadata["text"],
+                "content": metadata["content"],
                 "source": metadata["source"],
                 "id": metadata["id"],
                 "score": distances[0][i]
@@ -97,7 +97,7 @@ class Retriever:
             for j, idx in enumerate(query_indices):
                 metadata = self.metadata[idx]
                 results.append({
-                    "text": metadata["text"],
+                    "content": metadata["content"],
                     "source": metadata["source"],
                     "id": metadata["id"],
                     "score": distances[i][j]

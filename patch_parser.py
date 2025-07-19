@@ -36,6 +36,19 @@ def parse_llm_output(text: str) -> Dict[str, List[Patch] | List[UnitTest]]:
 
     return {"patches": patches, "unit_tests": unit_tests}
 
+def _validate_patch(diff_text: str) -> bool:
+    """
+    Validates the patch to prevent basic TypeErrors.
+    This is a simplified check. A more robust solution might involve a static analysis tool.
+    """
+    # Avoid adding a string and an integer
+    if re.search(r"\+\s*.*(\w+\s*\+\s*['\"].*['\"])", diff_text) or re.search(r"\+\s*.*(['\"].*['\"]\s*\+\s*\w+)", diff_text):
+        # Check if it's a string concatenation
+        if not re.search(r"\+\s*.*(['\"].*['\"]\s*\+\s*['\"].*['\"])", diff_text):
+             logging.warning(f"Potential TypeError detected in patch:\n{diff_text}")
+             return False
+    return True
+
 def _extract_patches(text: str) -> List[Patch]:
     """Extracts unified diff patches from the text."""
     # Regex to find unified diff blocks
@@ -48,8 +61,12 @@ def _extract_patches(text: str) -> List[Patch]:
         file_path = match.group(1)
         # Reconstruct the full diff text
         diff_text = f"diff --git a/{file_path} b/{match.group(2)}\n--- a/{file_path}\n+++ b/{match.group(2)}\n@@ {match.group(3)}"
-        patches.append({"file_path": file_path, "diff": diff_text})
-        logging.info(f"Found patch for file: {file_path}")
+        if _validate_patch(diff_text):
+            patches.append({"file_path": file_path, "diff": diff_text})
+            logging.info(f"Found and validated patch for file: {file_path}")
+        else:
+            logging.warning(f"Invalid patch detected for file {file_path}. Skipping.")
+            
     return patches
 
 

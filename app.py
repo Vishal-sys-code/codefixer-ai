@@ -1,10 +1,11 @@
 import streamlit as st
 import os
+import traceback
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 INDEX_PATH = os.getenv("INDEX_PATH", "data/faiss_index")
 METADATA_PATH = os.getenv("METADATA_PATH", "data/github_issues.jsonl")
 
@@ -45,9 +46,9 @@ def main():
                     retriever = Retriever(
                         index_path=f"{INDEX_PATH}/index.faiss",
                         metadata_path=METADATA_PATH,
-                        api_key=OPENAI_API_KEY
+                        google_api_key=GOOGLE_API_KEY
                     )
-                    llm_agent = LLMAgent(api_key=OPENAI_API_KEY)
+                    llm_agent = LLMAgent(api_key=GOOGLE_API_KEY)
 
                     # 2. Retrieve context
                     retrieved_docs = retriever.retrieve(error_snippet, top_k=5)
@@ -55,11 +56,11 @@ def main():
                     with st.expander("Retrieved Context"):
                         for doc in retrieved_docs:
                             st.write(f"**Source:** {doc['source']} ({doc['id']}) - **Score:** {doc['score']:.4f}")
-                            st.text(doc['text'])
+                            st.text(doc['content'])
                             st.divider()
 
                     # 3. Generate patch
-                    context_str = "\n".join([doc['text'] for doc in retrieved_docs])
+                    context_str = "\n".join([doc['content'] for doc in retrieved_docs])
                     full_prompt = f"Error and Code:\n{error_snippet}\n\nRetrieved Context:\n{context_str}"
                     llm_response = llm_agent.generate_patch(full_prompt, file_path=repo_path)
 
@@ -85,7 +86,9 @@ def main():
                 except FileNotFoundError:
                     st.error(f"Index not found at {INDEX_PATH}. Please run the indexer first.")
                 except Exception as e:
-                    st.error(f"An error occurred: {e}")
+                    st.error("An error occurred while processing your request.")
+                    st.error(f"Error details: {e}")
+                    st.code(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
