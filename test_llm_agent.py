@@ -56,7 +56,7 @@ class TestLLMAgent(unittest.TestCase):
         response = agent.generate_patch("test prompt")
         
         # Assert
-        self.assertIn("Error: An error occurred during the API call.", response)
+        self.assertTrue(response.startswith("Error: An error occurred during the API call:"))
 
 if __name__ == '__main__':
     unittest.main()

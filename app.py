@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import traceback
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -55,11 +56,11 @@ def main():
                     with st.expander("Retrieved Context"):
                         for doc in retrieved_docs:
                             st.write(f"**Source:** {doc['source']} ({doc['id']}) - **Score:** {doc['score']:.4f}")
-                            st.text(doc['text'])
+                            st.text(doc['content'])
                             st.divider()
 
                     # 3. Generate patch
-                    context_str = "\n".join([doc['text'] for doc in retrieved_docs])
+                    context_str = "\n".join([doc['content'] for doc in retrieved_docs])
                     full_prompt = f"Error and Code:\n{error_snippet}\n\nRetrieved Context:\n{context_str}"
                     llm_response = llm_agent.generate_patch(full_prompt, file_path=repo_path)
 
@@ -85,7 +86,9 @@ def main():
                 except FileNotFoundError:
                     st.error(f"Index not found at {INDEX_PATH}. Please run the indexer first.")
                 except Exception as e:
-                    st.error(f"An error occurred: {e}")
+                    st.error("An error occurred while processing your request.")
+                    st.error(f"Error details: {e}")
+                    st.code(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
