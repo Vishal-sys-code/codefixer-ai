@@ -16,7 +16,7 @@ The project is composed of the following components:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/retrieval-augmented-code-debugger.git
+   git clone https://github.com/Vishal-sys-code/codefixer-ai.git
    ```
 2. Install the dependencies:
    ```bash
