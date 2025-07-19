@@ -1,0 +1,9 @@
+This is a noisy file.
+It has some irrelevant information.
+For example, here is a recipe for a cake:
+...
+(imagine a cake recipe here)
+...
+And here is the actual error:
+def my_function():
+    x = 1 / 0
