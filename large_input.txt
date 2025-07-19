@@ -1,0 +1,8 @@
+This is a very large file.
+It has many lines of text.
+...
+(imagine 1000 lines of text here)
+...
+This is the end of the file.
+def my_function():
+    x = 1 / 0
