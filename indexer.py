@@ -129,3 +129,15 @@ class Indexer:
             })
         logger.info("Query processed successfully.")
         return results
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--repo_name', type=str, required=True)
+    parser.add_argument('--so_tags', type=str, required=True)
+    args = parser.parse_args()
+
+    indexer = Indexer(repo_name=args.repo_name, so_tags=args.so_tags.split(','))
+    indexer.build_index()
+    indexer.save_index('data/faiss_index')
