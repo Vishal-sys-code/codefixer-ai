@@ -15,10 +15,19 @@ class LLMAgent:
         self.model = genai.GenerativeModel('gemini-pro')
 
     def generate_patch(self, context: str, file_path: str = None):
+        system_prompt = """You are an expert programmer. Your task is to provide code patches to fix bugs.
+Pay close attention to data types and potential `TypeError` exceptions.
+Analyze the provided context, which includes an error message and relevant code snippets.
+Generate a patch in the git diff format.
+Also, generate a relevant unit test to verify the fix.
+"""
+        
         if file_path:
-            prompt = f"Given the following context and file path, generate a patch to fix the bug.\n\nContext:\n{context}\n\nFile Path:\n{file_path}"
+            user_prompt = f"Given the following context and file path, generate a patch to fix the bug.\n\nContext:\n{context}\n\nFile Path:\n{file_path}"
         else:
-            prompt = f"Given the following context, generate a patch to fix the bug.\n\nContext:\n{context}"
+            user_prompt = f"Given the following context, generate a patch to fix the bug.\n\nContext:\n{context}"
+
+        prompt = f"{system_prompt}\n\n{user_prompt}"
 
         safety_settings = [
             {
@@ -48,10 +57,16 @@ class LLMAgent:
 
             if hasattr(response, 'text'):
                 return response.text
-            else:
-                logger.error(f"Unexpected API response: {response}")
-                return "Error: The API returned an unexpected response."
+            
+            # Check for blocked response
+            if response.prompt_feedback and response.prompt_feedback.block_reason:
+                logger.error(f"API call blocked due to: {response.prompt_feedback.block_reason}")
+                return f"Error: The API call was blocked. Reason: {response.prompt_feedback.block_reason}"
+
+            # Handle other unexpected responses
+            logger.error(f"Unexpected API response: {response}")
+            return "Error: The API returned an unexpected response. Check logs for details."
 
         except Exception as e:
             logger.error(f"An error occurred during the API call: {e}")
-            return "Error: An error occurred during the API call."
+            return f"Error: An error occurred during the API call: {e}"
