@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 INDEX_PATH = os.getenv("INDEX_PATH", "data/faiss_index")
 METADATA_PATH = os.getenv("METADATA_PATH", "data/github_issues.jsonl")
 
@@ -45,9 +45,9 @@ def main():
                     retriever = Retriever(
                         index_path=f"{INDEX_PATH}/index.faiss",
                         metadata_path=METADATA_PATH,
-                        google_api_key=GOOGLE_AI_API_KEY
+                        google_api_key=GOOGLE_API_KEY
                     )
-                    llm_agent = LLMAgent(api_key=GOOGLE_AI_API_KEY)
+                    llm_agent = LLMAgent(api_key=GOOGLE_API_KEY)
 
                     # 2. Retrieve context
                     retrieved_docs = retriever.retrieve(error_snippet, top_k=5)
