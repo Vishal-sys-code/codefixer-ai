@@ -1,42 +1,57 @@
-import time
-
-class LLMAgent:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-
-    def generate_patch(self, context: str, file_path: str = None):
-        # This is a placeholder. In a real implementation, this would
-        # call a large language model to generate a patch.
-        print(f"Generating patch for file: {file_path}")
-        time.sleep(2)  # Simulate network latency
-        
-        mock_diff = """\
-diff --git a/example.py b/example.py
---- a/example.py
-+++ b/example.py
-@@ -1,5 +1,5 @@
- def buggy_function():
--    return "This is a buggy function"
-+    return "This is a fixed function"
- 
- if __name__ == "__main__":
-     print(buggy_function())
-"""
-        mock_tests = """\
-```python
-def test_fixed_function():
-    assert buggy_function() == "This is a fixed function"
-```
-"""
-        return f"Suggested patch:\n{mock_diff}\n\nGenerated unit tests:\n{mock_tests}"
+import os
+import logging
 import google.generativeai as genai
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class LLMAgent:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
+        if not self.api_key:
+            raise ValueError("Google API key not provided. Please set the GOOGLE_API_KEY environment variable.")
         genai.configure(api_key=self.api_key)
+        self.model = genai.GenerativeModel('gemini-pro')
 
     def generate_patch(self, context: str, file_path: str = None):
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(context)
-        return response.text
+        if file_path:
+            prompt = f"Given the following context and file path, generate a patch to fix the bug.\n\nContext:\n{context}\n\nFile Path:\n{file_path}"
+        else:
+            prompt = f"Given the following context, generate a patch to fix the bug.\n\nContext:\n{context}"
+
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE",
+            },
+        ]
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config={"response_mime_type": "text/plain"},
+                safety_settings=safety_settings
+            )
+
+            if hasattr(response, 'text'):
+                return response.text
+            else:
+                logger.error(f"Unexpected API response: {response}")
+                return "Error: The API returned an unexpected response."
+
+        except Exception as e:
+            logger.error(f"An error occurred during the API call: {e}")
+            return "Error: An error occurred during the API call."
